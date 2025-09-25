@@ -1,0 +1,7 @@
+{
+  "name": "dice-to-midnight",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
