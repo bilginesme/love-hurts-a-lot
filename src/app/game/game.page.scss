@@ -1,0 +1,32 @@
+/* game.page.scss */
+
+/* Ensure ion-content is fully stripped of padding and background */
+ion-content {
+  --padding-start: 0px;
+  --padding-end: 0px;
+  --padding-top: 0px;
+  --padding-bottom: 0px;
+  --background: '#aa1e22', //  background; /* Use CSS variable for background */
+  
+  /* Use display flex to ensure the container stretches */
+  display: flex; 
+  flex-direction: column;
+}
+
+/* Ensure the Phaser container takes up the entire space */
+#phaser-container {
+  flex-grow: 1; /* Fills the space provided by the ion-content flex container */
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+/* Ensure the canvas element fills the container */
+#phaser-container canvas {
+  display: block; 
+  width: 100%;
+  height: 100%;
+}

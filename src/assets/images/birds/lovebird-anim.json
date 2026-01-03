@@ -1,0 +1,108 @@
+{"frames": [
+
+{
+	"filename": "01.png",
+	"frame": {"x":0,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "02.png",
+	"frame": {"x":160,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "03.png",
+	"frame": {"x":320,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "04.png",
+	"frame": {"x":480,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "05.png",
+	"frame": {"x":640,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "06.png",
+	"frame": {"x":800,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "07.png",
+	"frame": {"x":960,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "08.png",
+	"frame": {"x":1120,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "09.png",
+	"frame": {"x":1280,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "10.png",
+	"frame": {"x":1440,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "11.png",
+	"frame": {"x":1600,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+},
+{
+	"filename": "12.png",
+	"frame": {"x":1760,"y":0,"w":160,"h":180},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":180},
+	"sourceSize": {"w":160,"h":180}
+}],
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "seagull-anim.png",
+	"format": "RGBA8888",
+	"size": {"w":1920,"h":180},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:3169c146a09fd2f0c2d28efe897cb43a:c3b4515e706e9565a9510bc769d547ba:8e660a2ed58c7af55c0d003b5b57e044$"
+}
+}

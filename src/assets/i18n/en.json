@@ -1,0 +1,25 @@
+{
+  "HOME": {
+    "TITLE": "Love Hurts a Lot",
+    "SUBTITLE": "Subtitle here"
+  },
+  "PAUSE_SCENE": {
+    "TITLE": "PAUSED",
+    "RESUME": "RESUME",
+    "MAIN_MENU": "MAIN MENU"
+  },
+  "SETTINGS_SCENE": {
+    "TITLE": "SETTINGS",
+    "MAIN_MENU": "MAIN MENU",
+    "MUSIC_VOLUME": "MUSIC VOLUME",
+    "SFX_VOLUME": "SFX VOLUME" 
+  },
+  "GAME_OVER_SCENE": {
+    "TITLE_SUCCESS": "You succeded :)",
+    "TITLE_FAILURE": "Too much love.\nSorry!",
+    "SCORE": "SCORE",
+    "PLAY_AGAIN": "PLAY AGAIN",
+    "MAIN_MENU": "MAIN MENU"
+  }
+
+}

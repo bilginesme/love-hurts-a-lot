@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'dice-to-midnight',
+  appId: 'com.bilginesme.love-hurts',
+  appName: 'love-hurts-a-lot',
   webDir: 'www'
 };
 

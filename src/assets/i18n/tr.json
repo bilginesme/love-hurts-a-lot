@@ -1,0 +1,11 @@
+{
+  "TITLE": "MomentumMap'a Hoş Geldiniz!",
+  "DESCRIPTION": "Günlük taahhütlerinizi takip edin ve güçlü alışkanlıklar oluşturun.",
+  "CALENDAR": {
+    "JANUARY": "Ocak",
+    "FEBRUARY": "Şubat",
+    "MARCH": "Mart",
+    "WEEKDAYS": ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
+    "TOOLTIP": "{{date}} tarihinde etkinlik"
+  }
+}
