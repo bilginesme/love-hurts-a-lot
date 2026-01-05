@@ -11,7 +11,7 @@ import Bullet from '../sprites/Bullet';
 import Bird from '../sprites/Bird';
 import Couple from '../sprites/Couple';
 import { FallingItem } from '../sprites/FallingItem';
-import { ItemType } from '../types/ItemConfig';
+import { ITEM_MANIFEST, ItemType } from '../types/ItemConfig';
 import Clouds from "../sprites/Clouds";
 import { Moon } from '../sprites/Moon';
 import { LevelManager } from '../managers/LevelManager';
@@ -63,6 +63,7 @@ export class GameScene extends Phaser.Scene {
     public audioManager!: AudioManager; // Public so Hero/Birds can access if needed
 
     private hero!:Hero;
+    private stars!:Stars;
     private ladderBalcony!:Phaser.GameObjects.Sprite;
     private ladderLadder!:Phaser.GameObjects.Sprite;
     private apartment!:Apartment;
@@ -122,14 +123,8 @@ export class GameScene extends Phaser.Scene {
         bg.setDisplaySize(this.scale.width, this.scale.height);
         bg.setDisplayOrigin(0, 0);
 
-        const stars = new Stars(this, 'stars', 0, 0).setInteractive().setDepth(-19);
-
+        this.stars = new Stars(this, 'stars', 0, 0).setInteractive().setDepth(-19);
         this.moon = new Moon(this);
-        // DEV CHEAT: Speed it up to see it working instantly!
-        // access private property via casting (or make it public temporarily)
-        //(this.moon as any).timeScale = 0.001; 
-        //(this.moon as any).startPassage(); // Force start immediately
-
         this.clouds = new Clouds(this).setDepth(-5);
         this.distantBuildings = new DistantBuildings(this, 0, 2736);
         this.apartment = new Apartment(this, 0, 2736);
@@ -154,23 +149,23 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.bulletsGroup, this.fallingItemsGroup, this.onHitBulletHitItem  as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback, this.callBack, this);
 
         this.time.addEvent({
-            delay: 10000,
+            delay: 5000,
             loop: true,
             callback: this.spawnCouple,
             callbackScope: this
-        });     // Every 2 seconds, try to wake up a random window
+        });     // Every n seconds, try to wake up a random window
 
         this.levelManager = new LevelManager(this, this.currentLevelId);
         this.levelManager.start();
 
         this.createFloor();
-        this.scheduleNextSpawn();   // 3. START SPAWNING LOOP
+        this.scheduleNextSpawnBird();   // 3. START SPAWNING LOOP
         this.createAnims();
         this.createUI();
         this.developmentTools();
     }
 
-    developmentTools(): void {
+    private developmentTools(): void {
         // Setup Keyboard Input (Development Helper)
         // The event is 'keydown-SPACE'. It fires once per press (no rapid-fire machine gun if held down).
         this.input.keyboard?.on('keydown-SPACE', () => { this.shootWeapon();  });
@@ -302,19 +297,15 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.fallingItemsGroup,  this.floor,  this.onItemHitsFloor as  Phaser.Types.Physics.Arcade.ArcadePhysicsCallback , this.callBack, this);
     }
 
-    public translateMe(str:string): string {
-        return this.translate.instant(str);
-    }
-
-    callBack() {}
+    private callBack() {}
     
-    spawnBird() {
+    private spawnBird() {
         const bird = this.birdsGroup.get();
         if (!bird) return;
 
         const lane = Phaser.Math.RND.pick(SKY_LANES);
         const laneY = Phaser.Math.Between(lane.minY, lane.maxY);
-        const speed = Phaser.Math.Between(100, 200);
+        
         const direction = Phaser.Math.RND.pick([1, -1]);
 
         let payload:ItemType = 'none';
@@ -328,6 +319,8 @@ export class GameScene extends Phaser.Scene {
         const nature = isLoveBird ? BirdNature.LOVE : BirdNature.EVIL;
         const birdData:BirdData | null = this.getRandomBird(nature);
 
+        const speed = Phaser.Math.Between(birdData!.speed - 50, birdData!.speed + 50);
+
         // 2. ASSIGN PAYLOAD BASED ON TYPE
         // If it's a Love bird, it carries a potion.
         // (If you want some Love birds to be empty, add a secondary check here)
@@ -336,20 +329,47 @@ export class GameScene extends Phaser.Scene {
         // 3. TARGETING LOGIC
         if (isLoveBird) {
             // 2. Filter: Active, Visible, AND "Downstream" from the bird
+            // Define your threshold (Experiment with this value: 150 to 300 usually feels fair)
+            const MIN_DROP_DISTANCE = 400; 
+
             const activeCouples = this.couplesGroup.getChildren().filter((c) => {
                 const couple = c as Couple;
                 
-                // couple.y must be LARGER than laneY for gravity to work
+                // Calculate the vertical gap
+                const distanceY = couple.y - laneY;
+
                 return couple.active 
                     && couple.visible 
-                    && couple.y > laneY; 
+                    // Must be below the bird AND satisfy the minimum distance
+                    && couple.y > laneY 
+                    && distanceY >= MIN_DROP_DISTANCE; 
             }) as Couple[];
 
             if (activeCouples.length > 0) {
+                // 1. Pick a random victim first
                 const victim = Phaser.Math.RND.pick(activeCouples);
                 targetX = victim.x;
-                payload = Phaser.Math.RND.pick(loveItems);
-                payload = 'potion_slow';
+
+                // 2. Identify what movement style works on this specific victim
+                // (e.g., 'balloon_float' for windows, 'fall_straight' for balconies)
+                const requiredMovement = victim.coupleData.vulnerableTo;
+
+                // 3. FILTER the available items
+                // Only keep items whose movementStyle matches the victim's vulnerability
+                const validItems = loveItems.filter((itemKey: ItemType) => {
+                    const data = ITEM_MANIFEST[itemKey];
+                    return data.movementStyle === requiredMovement;
+                });
+
+                // 4. Safety Check & Selection
+                if (validItems.length > 0) {
+                    payload = Phaser.Math.RND.pick(validItems);
+                } else {
+                    // Fallback: If no compatible items exist for this couple in this phase,
+                    // we should probably pick a different couple or abort the spawn to prevent a bug.
+                    console.warn(`No matching items found for couple type: ${victim.coupleData.id}`);
+                    return; // Skip spawning this frame
+                }
             } else {
                 // IMPORTANT: No valid targets below this bird!
                 // You have two choices here:
@@ -368,7 +388,7 @@ export class GameScene extends Phaser.Scene {
         bird.spawn(laneY, speed, direction, birdData, payload, targetX);
     }
     
-    spawnCouple() {
+    private spawnCouple() {
         // 1. Get all couples that are currently "Asleep" (not busy)
         const availableCouples = this.couplesGroup.getChildren().filter(
             (c) => !(c as Couple).isBusy
@@ -381,7 +401,7 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    public getRandomBird(nature: BirdNature): BirdData | null {
+    private getRandomBird(nature: BirdNature): BirdData | null {
         const currentLevel = LEVEL_MANIFEST[0];
             const currentPhase = currentLevel.phases[0];
         
@@ -400,14 +420,14 @@ export class GameScene extends Phaser.Scene {
         return BIRD_MANIFEST[selectedKey];
     }
 
-    private scheduleNextSpawn() {
+    private scheduleNextSpawnBird() {
         const delay = this.levelManager.getSpawnInterval(); // Ask Manager: "How fast should I spawn right now?"
 
         this.time.addEvent({
             delay: delay,
             callback: () => {
                 this.spawnBird();
-                this.scheduleNextSpawn();       // RECURSION: Schedule the next one immediately after
+                this.scheduleNextSpawnBird();       // RECURSION: Schedule the next one immediately after
             }
         });
     }   // THE RECURSIVE SPAWNER
@@ -451,7 +471,7 @@ export class GameScene extends Phaser.Scene {
         return Phaser.Display.Color.GetColor(r, g, b);
     }   // Generates a random color between a min brightness and white,  e.g. min=200 makes it vary between Light Grey (0xC8C8C8) and White (0xFFFFFF)
 
-    shootWeapon() {
+    private shootWeapon() {
         const bullet = this.bulletsGroup.get();     // Get a "dead" bullet from the pool
 
         if (bullet) {
@@ -475,7 +495,7 @@ export class GameScene extends Phaser.Scene {
         }
     }
  
-    onHitBulletBird(bullet: Bullet, bird: Bird) {
+    private onHitBulletBird(bullet: Bullet, bird: Bird) {
         const weaponData = bullet.getWeaponData();      // Get the weapon type from the bullet
 
         // Ask the bird: "Are you hurt by this weapon?"
@@ -508,7 +528,7 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
-    onItemHitCouple(couple: Couple, item: FallingItem) {
+    private onItemHitCouple(couple: Couple, item: FallingItem) {
         if (item.isConsumed) {
             return; // Stop here! Do not run logic again.
         }
@@ -660,7 +680,7 @@ export class GameScene extends Phaser.Scene {
     }
     */
 
-    onItemHitsFloor(obj1: any, obj2: any) {
+    private onItemHitsFloor(obj1: any, obj2: any) {
         const fallingItem = obj1 as FallingItem;
 
         // --- THE FIX ---
@@ -743,7 +763,7 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
-    onHitBulletHitItem(bullet: Bullet, item: FallingItem) {
+    private onHitBulletHitItem(bullet: Bullet, item: FallingItem) {
         // 1. Ask the item to check WHERE it was hit
         // We pass the global Y of the bullet
         const wasHit = item.checkHitCoordinates(bullet);
@@ -761,7 +781,7 @@ export class GameScene extends Phaser.Scene {
         this.scene.launch('PauseScene');
     }
 
-    endGame(victory: boolean) {
+    private endGame(victory: boolean) {
         this.scoreboard.stopTimer(); // Stop the clock!
         this.scene.start('GameOverScene', {
             score: this.score, 

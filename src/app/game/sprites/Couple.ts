@@ -39,7 +39,7 @@ export default class Couple extends Phaser.Physics.Arcade.Sprite {
             alpha: 1,
             duration: 1000,
             onComplete: () => {
-                // 3. Start the "Stay Timer" (e.g., stay for 3 seconds)
+                // 3. Start the "Stay Timer" (e.g., stay for n seconds)
                 this.timerEvent = this.scene.time.delayedCall(20000, () => {
                     this.fadeOut();
                 });
@@ -67,16 +67,14 @@ export default class Couple extends Phaser.Physics.Arcade.Sprite {
         this.setTexture(this.coupleData.textureHit);
         // Maybe wait 1 second then fade out?
         this.scene.time.delayedCall(500, () =>
-            {
-                this.fadeOut();
-                this.setTexture(this.coupleData.textureNormal);
-            } 
-            );
+        {
+            this.fadeOut();
+            this.setTexture(this.coupleData.textureNormal);
+        });
     }
 
     public hitByLovePotion() {
         this.setTexture(this.coupleData.textureLove);
-        // Maybe wait 1 second then fade out?
         this.scene.time.delayedCall(500, () =>
         {
             this.fadeOut();
@@ -85,9 +83,7 @@ export default class Couple extends Phaser.Physics.Arcade.Sprite {
         );
     }
 
-    // NEW: Validating the Hit
     public canBeHitBy(item: ItemData): boolean {
-        // The core logic:
         // Does this couple's vulnerability match the item's movement?
         return this.coupleData.vulnerableTo === item.movementStyle;
     }

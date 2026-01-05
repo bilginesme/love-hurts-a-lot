@@ -62,7 +62,7 @@ export const WEAPON_MANIFEST: Record<WeaponType, WeaponData> = {
         handYOffset: 35,     
         gunOffsetX: -130,
         gunOffsetY: -12,     
-        bulletSpeed: 500,
+        bulletSpeed: 1200,
         fireRate: 800,
         bulletTexture: 'bullet-dart',
         bulletSound: 'bullet'

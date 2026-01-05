@@ -44,7 +44,7 @@ export const LEVEL_MANIFEST: LevelData[] = [
                 startTime: 60, 
                 spawnInterval: 2500, 
                 allowedItemsEvil: ['flowerpot', 'microwave'], 
-                allowedItemsLove: ['potion_small', 'potion_large'], 
+                allowedItemsLove: ['potion_small', 'potion_slow', 'potion_large'], 
                 evilRatio: 0.4,
                 allowedBirds: ['stork', 'seagull'] 
             },
@@ -54,7 +54,7 @@ export const LEVEL_MANIFEST: LevelData[] = [
                 startTime: 120, 
                 spawnInterval: 2000, 
                 allowedItemsEvil: ['flowerpot', 'microwave', 'safe'], 
-                allowedItemsLove: ['potion_small', 'potion_large'], 
+                allowedItemsLove: ['potion_small', 'potion_slow', 'potion_large'], 
                 evilRatio: 0.3,
                 allowedBirds: ['stork', 'seagull'] 
             }
