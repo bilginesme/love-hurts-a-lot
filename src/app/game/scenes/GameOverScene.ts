@@ -1,5 +1,7 @@
 import { DTC } from "src/app/DTC";
 import { TranslateService } from '@ngx-translate/core';
+import { NeonSignGameOver } from "../sprites/NeonSignGameOver";
+import { AudioManager } from "../managers/AudioManager";
 
 export default class GameOverScene extends Phaser.Scene {
     private translate!: TranslateService;
@@ -11,24 +13,48 @@ export default class GameOverScene extends Phaser.Scene {
     private txtPlayAgain!: Phaser.GameObjects.Text;
     private buttonMainMenu!: Phaser.GameObjects.Sprite;
     private txtMainMenu!: Phaser.GameObjects.Text;
+    private audioManager!: AudioManager;
 
     constructor() {
         super('GameOverScene');
     }
 
     create(data: { score: number, result: string }) {
+        this.audioManager = this.registry.get('audioManager');
+        if (!this.audioManager) {
+            // 2. First time arrival: Create it and save it
+            this.audioManager = new AudioManager(this);
+            this.registry.set('audioManager', this.audioManager);
+            console.log("AudioManager created for the first time.");
+        } else {
+            // 3. Returning from GameScene: Just update the context
+            console.log("Reusing existing AudioManager.");
+        }
+
         this.translate = this.registry.get('translateService'); 
-        this.add.image(0, 0, 'brick-bg').setOrigin(0, 0);
-        this.gameOver = this.add.image(this.scale.width / 2, this.scale.height / 2, 'game-over')
-            .setOrigin(0.5, 0.5);
+        this.add.image(0, 0, 'brick-bg').setOrigin(0, 0).setDepth(0);
+        const theLight = this.add.image(this.scale.width / 2, 1000, 'light')
+            .setOrigin(0.5, 0.5)
+            .setDepth(0)
+            .setAlpha(0.35)
+            .setScale(1.5)
+            .setInteractive();
+
+         this.tweens.add({
+            targets: theLight,
+            alpha: { from: 0.32, to: 0.35 },
+            duration: 150,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        const sign = new NeonSignGameOver(this, this.scale.width / 2, 1400, this.audioManager);
 
         let strResultText:string = 'The result of the game';
         let strScore:string = '0000';
-        console.log(data);
 
         if(data) {
-            console.log('game over resulted');
-            
             if(data.result) {
                 strResultText = this.translate.instant('GAME_OVER_SCENE.TITLE_SUCCESS');
             } else {
@@ -63,12 +89,6 @@ export default class GameOverScene extends Phaser.Scene {
             align: 'center',
             fontFamily: this.dtc.strFontFamily
         }).setOrigin(0.5);
-
-
-        this.startFlicker();
-
-
-
 
         this.buttonPlayAgain = this.add.sprite(this.scale.width / 2, 2250, 'button-green-normal');
         this.buttonPlayAgain.setInteractive();
@@ -117,11 +137,6 @@ export default class GameOverScene extends Phaser.Scene {
             });
         });
 
-        
-
-
-
-
         this.txtMainMenu = this.add.text(this.scale.width / 2, 
             this.buttonMainMenu.y - 10,
             this.translate.instant('GAME_OVER_SCENE.MAIN_MENU'),
@@ -133,34 +148,5 @@ export default class GameOverScene extends Phaser.Scene {
             fontFamily: this.dtc.strFontFamily,
         })
         .setOrigin(0.5);
-
-    }
-
-    private startFlicker() {
-        // This function calls itself recursively with random delays
-        // to simulate erratic electrical failure.
-        
-        const isGlitch = Phaser.Math.RND.between(0, 100) > 90; // 10% chance of a "major" glitch
-        const delay = isGlitch ? Phaser.Math.Between(20, 100) : Phaser.Math.Between(100, 500);
-        
-        this.flickerTimer = this.time.delayedCall(delay, () => {
-            
-            // Randomly pick an intensity:
-            // 90% chance: High Intensity (0.8 - 1.0) -> The light is working
-            // 10% chance: Low Intensity (0.1 - 0.3)  -> The light dips/fails
-            
-            const flickerState = Math.random() > 0.1; 
-            const newAlpha = flickerState ? Phaser.Math.FloatBetween(0.9, 1.0) : Phaser.Math.FloatBetween(0.1, 0.3);
-
-            this.gameOver.setAlpha(newAlpha);
-            
-            // If you have a glow effect (PostFX), you can jitter that too:
-            // this.neonText.setShadowBlur(flickerState ? 20 : 5);
-
-            // Optional: Play a short "Buzz" sound when it lights up strongly
-            // if (newAlpha > 0.8 && Math.random() > 0.8) this.sound.play('neon_buzz', { volume: 0.1 });
-
-            this.startFlicker(); // Loop
-        });
     }
 }

@@ -2,8 +2,10 @@ import * as Phaser from 'phaser';
 import { ItemType, ITEM_MANIFEST, ItemData, MovementStyle } from '../types/ItemConfig';
 import { WeaponData } from '../types/WeaponConfig';
 import Bullet from './Bullet';
+import { AudioManager } from '../managers/AudioManager';
 
 export class FallingItem extends Phaser.GameObjects.Container {
+    private audioManager!: AudioManager;
     public itemData: ItemData;
     public isConsumed: boolean = false; 
     public movementStyle: MovementStyle;
@@ -19,9 +21,11 @@ export class FallingItem extends Phaser.GameObjects.Container {
     private scaleEnlarge: number = 4.0;
     private yStart: number = 0;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, type: ItemType) {
+    constructor(scene: Phaser.Scene, x: number, y: number, type: ItemType, audioManager: AudioManager) {
         super(scene, x, y);
         
+        this.audioManager = audioManager;
+
         const data = ITEM_MANIFEST[type];
         this.itemData = data;
         this.yStart = y; // Keep for sound intensity logic
@@ -34,7 +38,9 @@ export class FallingItem extends Phaser.GameObjects.Container {
         scene.physics.add.existing(this);
 
         // 1. Create the Main Item (Centered at 0,0 of Container)
-        this.itemSprite = scene.add.sprite(0, 0, data.texture);
+        this.itemSprite = scene.add.sprite(0, 0, 'objects-atlas', data.textureFrameNo)
+            .setOrigin(0.5, data.originY)
+            .setScale(data.scale);
         this.add(this.itemSprite);
 
         // 2. Setup Balloon (If config says so)
@@ -135,8 +141,6 @@ export class FallingItem extends Phaser.GameObjects.Container {
     public checkHitCoordinates(bullet: Bullet): boolean {
         const isVulnerable:boolean = this.itemData.vulnerableTo.includes(bullet.getWeaponData().id);
 
-        console.log('isVulnerable = ' + isVulnerable);
-
         if(!isVulnerable)
             return false;
 
@@ -163,6 +167,8 @@ export class FallingItem extends Phaser.GameObjects.Container {
 
     public popBalloon(): void {
         if (!this.isBalloonActive || !this.balloonSprite) return;
+
+        this.audioManager.playSFX('balloon-pop');
 
         // 1. Visual Pop
         this.isBalloonActive = false;
@@ -208,4 +214,9 @@ export class FallingItem extends Phaser.GameObjects.Container {
     public getYStart(): number {
         return this.yStart;
     }
+
+    public getIsBaloonActive(): boolean {
+        return this.isBalloonActive;
+    }
+
 }

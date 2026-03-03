@@ -11,49 +11,18 @@ import Bullet from '../sprites/Bullet';
 import Bird from '../sprites/Bird';
 import Couple from '../sprites/Couple';
 import { FallingItem } from '../sprites/FallingItem';
-import { ITEM_MANIFEST, ItemType } from '../types/ItemConfig';
+import { ItemType } from '../types/ItemConfig';
 import Clouds from "../sprites/Clouds";
 import { Moon } from '../sprites/Moon';
+import { AudioManager } from '../managers/AudioManager';
 import { LevelManager } from '../managers/LevelManager';
+import { BirdSpawnManager } from '../managers/BirdSpawnManager';
 import { WeaponData } from '../types/WeaponConfig';
 import { LoveGauge } from '../ui/LoveGauge';
-import { BIRD_MANIFEST, BirdData, BirdNature, BirdType } from '../types/BirdConfig';
-import { AudioManager } from '../managers/AudioManager';
-import { Scoreboard } from '../ui/Scoreboard';
+import  UpperPill  from '../ui/UpperPill';
 import { LEVEL_MANIFEST } from '../types/LevelConfig';
 import { Stars } from '../sprites/Stars';
 import { CouplePosition } from '../types/CoupleConfig';
-
-
-interface FlightLane {
-    id: string;      // "roof", "mid_gap", "street_level"
-    minY: number;    // Top boundary of this lane
-    maxY: number;    // Bottom boundary of this lane
-}
-
-// These numbers depend on your specific Background Art pixels!
-export const SKY_LANES: FlightLane[] = [
-    { 
-        id: 'above_balcony', 
-        minY: 290, 
-        maxY: 390, 
-    },
-    { 
-        id: 'third-floor', 
-        minY: 800, 
-        maxY: 900 
-    },
-    { 
-        id: 'second-floor', 
-        minY: 1330, 
-        maxY: 1430 
-    },
-    { 
-        id: 'first-floor', 
-        minY: 1750, 
-        maxY: 1850 
-    }
-];
 
 export class GameScene extends Phaser.Scene {
     private translate!: TranslateService;
@@ -83,8 +52,9 @@ export class GameScene extends Phaser.Scene {
     private moon!:Moon;
 
     private loveGauge!: LoveGauge;
-    private scoreboard!: Scoreboard;
+    private upperPill!: UpperPill;
 
+    public birdSpawnManager!: BirdSpawnManager;
     private levelManager!: LevelManager;
     private currentLevelId: number = 1; // Default
     
@@ -115,9 +85,20 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#FFFFFF'); // for visibility
         this.input.addPointer(3);
         
-        this.audioManager = new AudioManager(this);
+        this.audioManager = this.registry.get('audioManager') as AudioManager;
+        // 2. DEBUG FAIL-SAFE: If it doesn't exist (because you bypassed Menu), create it!
+        if (!this.audioManager) {
+            console.warn("Debug Mode: AudioManager not found in registry. Creating a new instance.");
+            this.audioManager = new AudioManager(this);
+            this.registry.set('audioManager', this.audioManager);
+        } else {
+            // Normal path: Just update the scene context
+            console.log("Reusing existing AudioManager.");
+        }
+
         this.events.once('shutdown', () => { this.audioManager.stopMusic(); });     // THE FIX: Cleanup when scene restarts/stops
-        this.audioManager.playMusic('background-01');        // 2. Start Level Music
+        const variations = ['background-01', 'background-02', 'background-03'];
+        this.audioManager.playMusicPlaylist(variations, 120000); // Swap every 2 mins
 
         const bg = this.add.image(0, 0, 'bg').setOrigin(0, 0).setDepth(-20);
         bg.setDisplaySize(this.scale.width, this.scale.height);
@@ -126,7 +107,7 @@ export class GameScene extends Phaser.Scene {
         this.stars = new Stars(this, 'stars', 0, 0).setInteractive().setDepth(-19);
         this.moon = new Moon(this);
         this.clouds = new Clouds(this).setDepth(-5);
-        this.distantBuildings = new DistantBuildings(this, 0, 2736);
+        this.distantBuildings = new DistantBuildings(this, this.scale.width, this.scale.height - 150);
         this.apartment = new Apartment(this, 0, 2736);
         this.birdsGroup = this.physics.add.group({ classType: Bird, maxSize: 10, runChildUpdate: true });
         this.fallingItemsGroup = this.physics.add.group({ runChildUpdate: true });
@@ -155,6 +136,8 @@ export class GameScene extends Phaser.Scene {
             callbackScope: this
         });     // Every n seconds, try to wake up a random window
 
+        this.birdSpawnManager = new BirdSpawnManager(this);
+
         this.levelManager = new LevelManager(this, this.currentLevelId);
         this.levelManager.start();
 
@@ -170,8 +153,14 @@ export class GameScene extends Phaser.Scene {
         // The event is 'keydown-SPACE'. It fires once per press (no rapid-fire machine gun if held down).
         this.input.keyboard?.on('keydown-SPACE', () => { this.shootWeapon();  });
         
+        let code:any = Phaser.Input.Keyboard.KeyCodes.ONE;
+        this.input.keyboard?.on('keydown-ONE', () => { this.switchWeapon();  });
+        this.input.keyboard?.on('keydown-TWO', () => { this.switchWeapon();  });
+        this.input.keyboard?.on('keydown-THREE', () => { this.switchWeapon();  });
+
         // DEVELOPMENT
         // Needed for mouse locations for creating another board
+        
         /*
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             let x:number =parseInt(pointer.x.toString());
@@ -189,9 +178,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     override update(time: number, delta: number) {
-        if (this.hero && this.scoreboard) {     // move the scoreboard if overlap    
-            this.scoreboard.checkHeroPosition(this.hero.y);
-        }
+       
     }
 
     private createUI(): void {
@@ -203,12 +190,12 @@ export class GameScene extends Phaser.Scene {
         this.loveGauge.setScale(0.8); // Adjust size
         this.loveGauge.setValue(50);
 
-        this.scoreboard = new Scoreboard(this, 900, 250, this.currentLevelId);
-        this.scoreboard.on('time-over', () => {
+        this.upperPill = new UpperPill(this, this.scale.width / 2, 150, this.currentLevelId);
+        this.upperPill.on('time-over', () => {
             this.endGame(false);
         });
 
-            this.txtCurrentGun = this.add.text(1000, 2600, 'gun', {
+        this.txtCurrentGun = this.add.text(1000, 2600, 'gun', {
             color: '#e0ebf7ff',
             fontSize: '50px',
             fontFamily: this.dtc.strFontFamily,
@@ -218,11 +205,7 @@ export class GameScene extends Phaser.Scene {
         this.txtCurrentGun.setText(this.hero.getCurrentWeapon().name)
 
         this.buttonWeaponChoosing.on('choose-next-weapon', () => {
-            this.scoreboard.hide();
-            let weaponsOfThisLevel = LEVEL_MANIFEST[0].weapons;
-            this.hero.selectNextWeapon(weaponsOfThisLevel);
-            this.txtCurrentGun.setText(this.hero.getCurrentWeapon().name)
-            this.buttonWeaponChoosing.changeBulletImage();
+            this.switchWeapon();
         });
 
         this.buttonGun.on('fire-gun', () => {
@@ -231,62 +214,77 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createAnims() {
+        // Define the 'fly' animation globally
+        if (!this.anims.exists('stork_fly')) {
+            this.anims.create({
+                key: 'stork_fly',
+                // Helper to generate frame names: 
+                // 'stork_atlas' is the key we loaded in Preloader
+                frames: this.anims.generateFrameNames('stork_atlas', { 
+                    prefix: '',   // Match your JSON filenames (without numbers)
+                    start: 1,           // First frame number
+                    end: 10,             // Last frame number (check your file!)
+                    zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
+                    suffix: '.png'      // If your JSON has extensions
+                }),
+                frameRate: 5,          // Speed (frames per second)
+                repeat: -1              // Loop forever
+            });
+        }
 
-            // Define the 'fly' animation globally
-    if (!this.anims.exists('stork_fly')) {
-        this.anims.create({
-            key: 'stork_fly',
-            // Helper to generate frame names: 
-            // 'stork_atlas' is the key we loaded in Preloader
-            frames: this.anims.generateFrameNames('stork_atlas', { 
-                prefix: '',   // Match your JSON filenames (without numbers)
-                start: 1,           // First frame number
-                end: 10,             // Last frame number (check your file!)
-                zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
-                suffix: '.png'      // If your JSON has extensions
-            }),
-            frameRate: 5,          // Speed (frames per second)
-            repeat: -1              // Loop forever
-        });
-    }
+        // Define the 'fly' animation globally
+        if (!this.anims.exists('lovebird_fly')) {
+            this.anims.create({
+                key: 'lovebird_fly',
+                // Helper to generate frame names: 
+                // 'stork_atlas' is the key we loaded in Preloader
+                frames: this.anims.generateFrameNames('lovebird_atlas', { 
+                    prefix: '',   // Match your JSON filenames (without numbers)
+                    start: 1,           // First frame number
+                    end: 12,             // Last frame number (check your file!)
+                    zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
+                    suffix: '.png'      // If your JSON has extensions
+                }),
+                frameRate: 5,          // Speed (frames per second)
+                repeat: -1               // Loop forever
+            });
+        }
 
-    // Define the 'fly' animation globally
-    if (!this.anims.exists('lovebird_fly')) {
-        this.anims.create({
-            key: 'lovebird_fly',
-            // Helper to generate frame names: 
-            // 'stork_atlas' is the key we loaded in Preloader
-            frames: this.anims.generateFrameNames('lovebird_atlas', { 
-                prefix: '',   // Match your JSON filenames (without numbers)
-                start: 1,           // First frame number
-                end: 12,             // Last frame number (check your file!)
-                zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
-                suffix: '.png'      // If your JSON has extensions
-            }),
-            frameRate: 5,          // Speed (frames per second)
-            repeat: -1               // Loop forever
-        });
-    }
+        // Define the 'fly' animation globally
+        if (!this.anims.exists('pelican_fly')) {
+            this.anims.create({
+                key: 'pelican_fly',
+                // Helper to generate frame names: 
+                // 'stork_atlas' is the key we loaded in Preloader
+                frames: this.anims.generateFrameNames('pelican_atlas', { 
+                    prefix: '',   // Match your JSON filenames (without numbers)
+                    start: 1,           // First frame number
+                    end: 9,             // Last frame number (check your file!)
+                    zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
+                    suffix: '.png'      // If your JSON has extensions
+                }),
+                frameRate: 5,          // Speed (frames per second)
+                repeat: -1               // Loop forever
+            });
+        }
 
-     // Define the 'dust' animation globally
-    if (!this.anims.exists('dust-explosion')) {
-        this.anims.create({
-            key: 'dust-explosion',
-            // Helper to generate frame names: 
-            // 'stork_atlas' is the key we loaded in Preloader
-            frames: this.anims.generateFrameNames('dust_atlas', { 
-                prefix: '',   // Match your JSON filenames (without numbers)
-                start: 1,           // First frame number
-                end: 16,             // Last frame number (check your file!)
-                zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
-                suffix: '.png'      // If your JSON has extensions
-            }),
-            frameRate: 10,          // Speed (frames per second)
-            repeat: 0              // Loop forever
-        });
-    }
-
-
+        // Define the 'dust' animation globally
+        if (!this.anims.exists('dust-explosion')) {
+            this.anims.create({
+                key: 'dust-explosion',
+                // Helper to generate frame names: 
+                // 'stork_atlas' is the key we loaded in Preloader
+                frames: this.anims.generateFrameNames('dust_atlas', { 
+                    prefix: '',   // Match your JSON filenames (without numbers)
+                    start: 1,           // First frame number
+                    end: 16,             // Last frame number (check your file!)
+                    zeroPad: 2,         // e.g. "01" needs 2 digits. Use 0 if just "1"
+                    suffix: '.png'      // If your JSON has extensions
+                }),
+                frameRate: 10,          // Speed (frames per second)
+                repeat: 0              // Loop forever
+            });
+        }
     }
 
     private createFloor(): void {
@@ -298,95 +296,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     private callBack() {}
-    
-    private spawnBird() {
-        const bird = this.birdsGroup.get();
-        if (!bird) return;
-
-        const lane = Phaser.Math.RND.pick(SKY_LANES);
-        const laneY = Phaser.Math.Between(lane.minY, lane.maxY);
-        
-        const direction = Phaser.Math.RND.pick([1, -1]);
-
-        let payload:ItemType = 'none';
-        const evilRatio = this.levelManager.getEvilRatio();
-        const evilItems = this.levelManager.getAllowedEvilItems();
-        const loveItems = this.levelManager.getAllowedLoveItems();
-
-        // 1. DECIDE TYPE FIRST (30% Love, 70% Evil)
-        // This single roll dictates everything
-        const isLoveBird = Math.random() > evilRatio; 
-        const nature = isLoveBird ? BirdNature.LOVE : BirdNature.EVIL;
-        const birdData:BirdData | null = this.getRandomBird(nature);
-
-        const speed = Phaser.Math.Between(birdData!.speed - 50, birdData!.speed + 50);
-
-        // 2. ASSIGN PAYLOAD BASED ON TYPE
-        // If it's a Love bird, it carries a potion.
-        // (If you want some Love birds to be empty, add a secondary check here)
-        let targetX: number | undefined;
-
-        // 3. TARGETING LOGIC
-        if (isLoveBird) {
-            // 2. Filter: Active, Visible, AND "Downstream" from the bird
-            // Define your threshold (Experiment with this value: 150 to 300 usually feels fair)
-            const MIN_DROP_DISTANCE = 400; 
-
-            const activeCouples = this.couplesGroup.getChildren().filter((c) => {
-                const couple = c as Couple;
-                
-                // Calculate the vertical gap
-                const distanceY = couple.y - laneY;
-
-                return couple.active 
-                    && couple.visible 
-                    // Must be below the bird AND satisfy the minimum distance
-                    && couple.y > laneY 
-                    && distanceY >= MIN_DROP_DISTANCE; 
-            }) as Couple[];
-
-            if (activeCouples.length > 0) {
-                // 1. Pick a random victim first
-                const victim = Phaser.Math.RND.pick(activeCouples);
-                targetX = victim.x;
-
-                // 2. Identify what movement style works on this specific victim
-                // (e.g., 'balloon_float' for windows, 'fall_straight' for balconies)
-                const requiredMovement = victim.coupleData.vulnerableTo;
-
-                // 3. FILTER the available items
-                // Only keep items whose movementStyle matches the victim's vulnerability
-                const validItems = loveItems.filter((itemKey: ItemType) => {
-                    const data = ITEM_MANIFEST[itemKey];
-                    return data.movementStyle === requiredMovement;
-                });
-
-                // 4. Safety Check & Selection
-                if (validItems.length > 0) {
-                    payload = Phaser.Math.RND.pick(validItems);
-                } else {
-                    // Fallback: If no compatible items exist for this couple in this phase,
-                    // we should probably pick a different couple or abort the spawn to prevent a bug.
-                    console.warn(`No matching items found for couple type: ${victim.coupleData.id}`);
-                    return; // Skip spawning this frame
-                }
-            } else {
-                // IMPORTANT: No valid targets below this bird!
-                // You have two choices here:
-                // A) Cancel the potion (make it an empty bird)
-                // B) Let it spawn but it won't drop anything
-                
-                // I recommend A (save the potion for a valid run):
-                // isPotion = false; // (You might need to change 'const isPotion' to 'let')
-            }
-        }
-        else {
-            payload = Phaser.Math.RND.pick(evilItems);
-        }
-
-        // Now you have a clean 30% spawn rate for Potions
-        bird.spawn(laneY, speed, direction, birdData, payload, targetX);
-    }
     
     private spawnCouple() {
         // 1. Get all couples that are currently "Asleep" (not busy)
@@ -401,39 +310,20 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    private getRandomBird(nature: BirdNature): BirdData | null {
-        const currentLevel = LEVEL_MANIFEST[0];
-            const currentPhase = currentLevel.phases[0];
-        
-        // 2. Filter valid keys
-        const allowedKeys = currentPhase.allowedBirds;
-        const candidates = allowedKeys.filter((key: BirdType) => {
-            return BIRD_MANIFEST[key].nature === nature;
-        });
-
-        if (candidates.length === 0) return null;
-
-        // 3. Pick a key
-        const selectedKey = Phaser.Math.RND.pick(candidates);
-
-        // 4. Return the DATA object directly
-        return BIRD_MANIFEST[selectedKey];
-    }
-
     private scheduleNextSpawnBird() {
         const delay = this.levelManager.getSpawnInterval(); // Ask Manager: "How fast should I spawn right now?"
 
         this.time.addEvent({
             delay: delay,
             callback: () => {
-                this.spawnBird();
+                this.birdSpawnManager.spawnTick(this.levelManager, this.birdsGroup, this.couplesGroup);
                 this.scheduleNextSpawnBird();       // RECURSION: Schedule the next one immediately after
             }
         });
     }   // THE RECURSIVE SPAWNER
  
     public spawnFallingObject(x:number, y:number, payload:ItemType) {
-        const item = new FallingItem(this, x, y, payload);
+        const item = new FallingItem(this, x, y, payload, this.audioManager);
         this.fallingItemsGroup.add(item); // ADD IT TO THE GROUP manually
         item.startFalling();
     }
@@ -495,8 +385,18 @@ export class GameScene extends Phaser.Scene {
         }
     }
  
+    private switchWeapon() {
+        let weaponsOfThisLevel = LEVEL_MANIFEST[0].weapons;
+        this.hero.selectNextWeapon(weaponsOfThisLevel);
+        this.txtCurrentGun.setText(this.hero.getCurrentWeapon().name)
+        this.buttonWeaponChoosing.changeBulletImage();
+    }
+
     private onHitBulletBird(bullet: Bullet, bird: Bird) {
         const weaponData = bullet.getWeaponData();      // Get the weapon type from the bullet
+        if (bullet.hasAlreadyHit(bird)) {   // Has this bullet already dealt with this specific bird?
+            return; 
+        }
 
         // Ask the bird: "Are you hurt by this weapon?"
         // (Using the logic we defined in Bird.ts earlier)
@@ -504,26 +404,24 @@ export class GameScene extends Phaser.Scene {
 
         // Handle the Bullet
         if (wasSuccessfulHit) {
-            // HIT: Destroy bullet immediately
             bullet.setActive(false);
             bullet.setVisible(false);
             bullet.disableBody(true, true);
-            
-            // bird.takeHit() already handles dropItem() and explode()
         } else {
-            // IMMUNE: (Optional) Bounce off or Play "Clank" sound
-            // For now, let's just destroy it, but maybe add a visual pop-up?
             this.showImmuneText(bird.x, bird.y);
         }
     }
 
     private showImmuneText(x: number, y: number) {
-        const text = this.add.text(x, y - 50, "IMMUNE!", { 
-            fontSize: '40px', color: '#fff', backgroundColor: '#000' 
-            }).setOrigin(0.5);
+        const text = this.add.text(x, y - 100, this.translate.instant('GAME_SCENE.IMMUNE'), 
+        {
+            fontFamily: this.dtc.strFontFamily,
+            fontSize: '70px', 
+            color: '#fff' 
+        }).setOrigin(0.5);
             
         this.tweens.add({
-            targets: text, y: y - 50, alpha: 0, duration: 500,
+            targets: text, y: y - 200, alpha: 0, duration: 1000,
             onComplete: () => text.destroy()
         });
     }
@@ -534,13 +432,19 @@ export class GameScene extends Phaser.Scene {
         }
 
         // 1. CHECK COMPATIBILITY
-        if (!couple.canBeHitBy(item.itemData)) {
+        if (!couple.canBeHitBy(item)) {
             // Mismatch! (e.g., Safe hitting a Window)
             // Item passes through (ignore collision)
             return; 
         }
 
-         const body = item.body as Phaser.Physics.Arcade.Body;
+        if(item.itemData.movementStyle == 'balloon_float' 
+            && item.getIsBaloonActive() == false
+            && couple.coupleData.id == 'window_couple') {
+            console.error('Should not harm the couple');
+        }
+
+        const body = item.body as Phaser.Physics.Arcade.Body;
 
         item.isConsumed = true;
         body.enable = false;      // DISABLE PHYSICS IMMEDIATELY - This removes it from the physics calculation for the rest of the frame
@@ -555,6 +459,9 @@ export class GameScene extends Phaser.Scene {
             const shakeIntensity = deltaValue * 0.0005; // 20 * 0.001 = 0.02 (Strong), 5 * 0.001 = 0.005 (Weak)
             this.cameras.main.shake(100, shakeIntensity);
             this.loveGauge.spawnParticleEvil();
+
+            let points = Math.abs(deltaValue * 10);
+            this.upperPill.addScore(points);
         } else {
             this.showFloatingText(item.x, item.y, `${deltaValue}`, '#ff0000'); 
             couple.hitByLovePotion();
@@ -582,103 +489,6 @@ export class GameScene extends Phaser.Scene {
             this.endGame(false);
         }
     }
- 
-    /*
-    onItemHitsFloorOBSOLETE(obj1: any, obj2: any) {
-        const fallingItem = obj1 as FallingItem;
-
-        // 1. Stop Physics
-        fallingItem.body!.stop();
-        fallingItem.setAngularVelocity(0);
-        fallingItem.body!.checkCollision.none = true;
-        fallingItem.body!.enable = false;
-
-        // 2. Calculate the "Flat" Angle
-        const currentAngle = fallingItem.angle; // Range is -180 to 180
-        let targetAngle = Math.round(currentAngle / 90) * 90;
-
-        // --- NEW: THE "NO UPSIDE DOWN" FIX ---
-        // Check if it's a potion (or any item you want to restrict)
-        const isPotion = fallingItem.texture.key.includes('potion'); 
-
-        // If it's a Potion AND it's trying to land Upside Down (180 or -180)
-        if (isPotion && Math.abs(targetAngle) === 180) {
-            // Force it to fall to the nearest side instead
-            // If angle is positive (e.g. 170), snap to 90. 
-            // If negative (e.g. -170), snap to -90.
-            targetAngle = (currentAngle > 0) ? 90 : -90;
-            
-            // OR: If you prefer it to magically jump to Upright, use:
-            // targetAngle = 0; 
-        }
-
-        // 1. Calculate normalized linear ratio (roughly 0.0 to 1.0)
-        // Clamp ensures we don't get negative values or values > 1 (though >1 can be cool for "overdrive")
-        let linearRatio = (this.scale.height - fallingItem.getYStart()) / this.scale.height;
-        linearRatio = Phaser.Math.Clamp(linearRatio, 0, 1);
-
-        // 2. Apply Exponential Curve
-        // Math.pow(value, 2) is "Quadratic" (Standard weight)
-        // Math.pow(value, 3) is "Cubic" (Very dramatic difference between low and high)
-        const curve = Math.pow(linearRatio, 2); 
-
-        // 3. Apply a "Floor" so it's never totally silent
-        // Range becomes: 0.2 (min) to 1.0 (max)
-        const minVol = 0.2;
-        const finalVolume = minVol + (curve * (1 - minVol));
-
-        // --- SOUND TRIGGER ---
-        if (fallingItem.itemData.soundHitFloor) {
-            // Detune: Randomly shift pitch up or down by 100 cents (semitone)
-            // This makes every impact sound slightly unique!
-            this.audioManager.playSFX(fallingItem.itemData.soundHitFloor, {
-                detune: Phaser.Math.Between(-200, 200),
-                volume: finalVolume // Or vary volume based on falling speed?
-            });
-        }
-
-        const floorY = fallingItem.y;
-
-        // IMPACT 1: BIG DUST (At the feet of the item)
-        // We adjust Y so the dust appears at the floor level, not the item center
-        this.spawnDust(fallingItem.x, floorY + 120, 1.0);
-        
-        // 3. Animation Chain
-        this.tweens.chain({
-                targets: fallingItem,
-                tweens: [
-                    // STEP A: Bounce UP
-                    {
-                        y: floorY - 40,
-                        angle: targetAngle, 
-                        duration: 150,
-                        ease: 'Quad.easeOut'
-                    },
-                    // STEP B: Fall DOWN
-                    {
-                        y: floorY,
-                        duration: 150,
-                        ease: 'Quad.easeIn',
-                        onComplete: () => {
-                            // IMPACT 2: SMALL DUST (The "Settling" thud)
-                            // Smaller scale (0.6)
-                            this.spawnDust(fallingItem.x, floorY, 0.4);
-                        }
-                    },
-                    // STEP C: Fade Out
-                    {
-                        alpha: 0,
-                        duration: 1000,
-                        delay: 500,
-                        ease: 'Linear'
-                    }
-                ],
-                onComplete: () => {
-                    fallingItem.destroy();
-                }
-            });
-    }
-    */
 
     private onItemHitsFloor(obj1: any, obj2: any) {
         const fallingItem = obj1 as FallingItem;
@@ -698,8 +508,7 @@ export class GameScene extends Phaser.Scene {
         // 3. Calculate Snap Angle
         let targetAngle = Math.round(currentAngle / 90) * 90;
 
-        // Use 'itemData.texture' instead of 'texture.key'
-        const isPotion = fallingItem.itemData.texture.includes('potion');
+        const isPotion = fallingItem.itemData.isPotion;
 
         // --- THE "NO UPSIDE DOWN" FIX ---
         if (isPotion && Math.abs(targetAngle) === 180) {
@@ -768,8 +577,9 @@ export class GameScene extends Phaser.Scene {
         // We pass the global Y of the bullet
         const wasHit = item.checkHitCoordinates(bullet);
 
-        // 2. Destroy the bullet regardless (it hit *something*)
-        bullet.destroy();
+        // 2. Destroy the bullet if not balloon
+        if(item.movementStyle != 'balloon_float')
+            bullet.destroy();
 
         // 3. Note: We don't destroy the item here!
         // If wasHit === true, the item called popBalloon() internally.
@@ -782,7 +592,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private endGame(victory: boolean) {
-        this.scoreboard.stopTimer(); // Stop the clock!
+        this.upperPill.stopTimer(); // Stop the clock!
         this.scene.start('GameOverScene', {
             score: this.score, 
             result: victory 

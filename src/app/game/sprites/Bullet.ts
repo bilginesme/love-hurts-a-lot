@@ -3,9 +3,11 @@ import { WeaponData } from "../types/WeaponConfig";
 // Bullet.ts
 export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     private weaponData!: WeaponData;
+    private ignoredTargets!: Set<Phaser.GameObjects.GameObject>;
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, 'bullet'); // Default texture
+        this.ignoredTargets = new Set();
     }
 
     fire(x: number, y: number, direction: number, weaponData: WeaponData) {
@@ -20,7 +22,7 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
         this.setTexture(weaponData.bulletTexture);
         this.setVelocityX(weaponData.bulletSpeed * direction); 
         this.setGravityY(0);
-        //this.setFlipX(direction < 0);
+        this.ignoredTargets.clear();
 
         // 3. THE SHRINK ANIMATION (Perspective Effect)
         // Shrink to 50% size over 200ms
@@ -61,6 +63,15 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    public hasAlreadyHit(target: Phaser.GameObjects.GameObject): boolean {
+        if (this.ignoredTargets.has(target)) {
+            return true;
+        }
+        // If not, add it now so next frame returns true
+        this.ignoredTargets.add(target);
+        return false;
+    }
+    
     public getWeaponData(): WeaponData {
         return this.weaponData;
     }

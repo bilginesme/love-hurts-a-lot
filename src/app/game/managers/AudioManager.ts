@@ -15,6 +15,10 @@ export class AudioManager {
     // Key for storage
     private readonly STORAGE_KEY = 'love_hurts_settings';
 
+    private musicRotationTimer?: Phaser.Time.TimerEvent;
+    private musicQueue: string[] = [];
+    private currentTrackIndex: number = 0;
+
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
         
@@ -96,7 +100,7 @@ export class AudioManager {
         this.scene.sound.play(key, config);
     }
 
-    public playMusic(key: string) {
+    private playMusic(key: string) {
         if (this.currentMusic) {
             this.currentMusic.stop();
         }
@@ -113,6 +117,45 @@ export class AudioManager {
             if (!this.isMuted) {
                 this.currentMusic.play();
             }
+        }
+    }
+
+    public playMusicPlaylist(keys: string[], rotationInterval: number = 120000) {
+        this.musicQueue = keys;
+        this.currentTrackIndex = 0;
+        
+        // Play the first track
+        this.playMusic(this.musicQueue[this.currentTrackIndex]);
+
+        // Clear any existing timer
+        if (this.musicRotationTimer) this.musicRotationTimer.remove();
+
+        // Set up the rotation timer (2 minutes = 120,000ms)
+        this.musicRotationTimer = this.scene.time.addEvent({
+            delay: rotationInterval,
+            callback: this.playNextTrack,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    private playNextTrack() {
+        this.currentTrackIndex = (this.currentTrackIndex + 1) % this.musicQueue.length;
+        const nextTrack = this.musicQueue[this.currentTrackIndex];
+        
+        // Use a fade out/in for a smooth transition
+        if (this.currentMusic) {
+            this.scene.tweens.add({
+                targets: this.currentMusic,
+                volume: 0,
+                duration: 2000,
+                onComplete: () => {
+                    this.playMusic(nextTrack);
+                    // playMusic handles the volume/fade-in logic you already wrote!
+                }
+            });
+        } else {
+            this.playMusic(nextTrack);
         }
     }
 

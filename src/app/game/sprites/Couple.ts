@@ -83,9 +83,24 @@ export default class Couple extends Phaser.Physics.Arcade.Sprite {
         );
     }
 
-    public canBeHitBy(item: ItemData): boolean {
-        // Does this couple's vulnerability match the item's movement?
-        return this.coupleData.vulnerableTo === item.movementStyle;
+    public canBeHitBy(item: FallingItem): boolean {
+        let canBeHit: boolean = false;
+
+        if(this.coupleData.vulnerableTo === item.itemData.movementStyle)
+            canBeHit = true;
+
+        if (item.itemData.movementStyle == 'balloon_float' 
+            && item.getIsBaloonActive() == false
+            && this.coupleData.id == 'window_couple') {
+                canBeHit = false;
+            }
+
+        if(item.y < this.y) {
+            console.log('THIS SOULD NOT BE HAPPENING');
+            canBeHit = false;
+        }
+  
+        return canBeHit;
     }
 
     public getPosition() : {x:number, y:number} {

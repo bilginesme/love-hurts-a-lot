@@ -3,6 +3,14 @@
     "TITLE": "Love Hurts a Lot",
     "SUBTITLE": "Subtitle here"
   },
+   "MENU_SCENE": {
+    "TITLE": "LOVE HURTS A LOT",
+    "PLAY": "PLAY",
+    "SETTINGS": "SETTINGS"
+  },
+  "GAME_SCENE": {
+    "IMMUNE": "IMMUNE!"
+  },
   "PAUSE_SCENE": {
     "TITLE": "PAUSED",
     "RESUME": "RESUME",

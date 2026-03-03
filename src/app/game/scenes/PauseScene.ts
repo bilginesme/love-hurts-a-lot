@@ -9,7 +9,6 @@ export default class PauseScene extends Phaser.Scene {
     private buttonMainMenu!: Phaser.GameObjects.Sprite;
     private txtMainMenu!: Phaser.GameObjects.Text;
 
-
     constructor() {
         super('PauseScene');    
     }
@@ -29,37 +28,7 @@ export default class PauseScene extends Phaser.Scene {
             fontStyle: 'normal'
         }).setOrigin(0.5);
 
-
-        const resumeBtn = this.add.text(this.scale.width / 2, 600, 'RESUME', {
-            fontSize: '140px',
-            fontFamily: this.dtc.strFontFamily,
-            backgroundColor: '#333333',
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive().setVisible(false);
-
-        resumeBtn.on('pointerdown', () => {
-            this.scene.stop();
-            this.scene.resume('GameScene');
-        });
-
-        // 4. Quit Button (Optional but good)
-        const quitBtn = this.add.text(this.scale.width / 2, 2300, 'QUIT TO MENU', {
-            fontSize: '100px',
-            fontFamily: this.dtc.strFontFamily,
-        }).setOrigin(0.5).setInteractive().setVisible(false);
-
-        quitBtn.on('pointerdown', () => {
-            this.scene.stop('GameScene'); // Kill the game
-            this.scene.start('MenuScene'); // Go home
-        });
-
-
-
-
-
-
-
-        
+            
         this.buttonResume = this.add.sprite(this.scale.width / 2, 2250, 'button-green-normal');
         this.buttonResume.setInteractive();
         this.buttonResume.on('pointerdown', () => {
@@ -76,8 +45,6 @@ export default class PauseScene extends Phaser.Scene {
                 this.scene.stop();
                 this.scene.resume('GameScene');
             });
-
- 
         });
         
         this.buttonResume.on('pointerout', () => {
@@ -115,7 +82,6 @@ export default class PauseScene extends Phaser.Scene {
 
             // Short delay so the user SEES the button pop back up before scene change
             this.time.delayedCall(100, () => {
-                console.log('MAIN MENU');
                 this.scene.stop('GameScene');
                 this.scene.start('MenuScene');
             });
@@ -125,7 +91,6 @@ export default class PauseScene extends Phaser.Scene {
             this.buttonMainMenu.setTexture('button-green-normal');
             this.buttonMainMenu.setScale(0.8);
         });
-
 
         this.txtMainMenu = this.add.text(this.scale.width / 2, 
             this.buttonMainMenu.y - 10,
@@ -138,8 +103,6 @@ export default class PauseScene extends Phaser.Scene {
             fontFamily: this.dtc.strFontFamily,
         })
         .setOrigin(0.5);
-
-
 
     }
 }

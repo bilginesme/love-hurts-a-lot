@@ -1,91 +1,131 @@
+import { TranslateService } from "@ngx-translate/core";
+import { NeonSignMenu } from '../sprites/NeonSignMenu';
 import { DTC } from "src/app/DTC";
+import { AudioManager } from "../managers/AudioManager";
 
 export default class MenuScene extends Phaser.Scene {
+    private dtc: DTC = new DTC();
+    private translate!: TranslateService;
+    private buttonResume!: Phaser.GameObjects.Sprite;
+    private txtResume!: Phaser.GameObjects.Text;
+    private buttonSettings!: Phaser.GameObjects.Sprite;
+    private txtSettings!: Phaser.GameObjects.Text;
+    private audioManager!: AudioManager;
+    
     constructor() {
         super('MenuScene');
     }
 
     create() {
-         this.add.image(0, 0, 'brick-bg').setOrigin(0, 0);
-
-        // 1. Title
-        this.add.text(this.scale.width / 2, 100, 'LOVE HURTS A LOT', {
-            fontSize: '80px',
-            color: '#ff69b4', // Hot pink
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        // 2. Play Button
-        const playBtn = this.add.text(this.scale.width / 2, 500, 'PLAY', {
-            fontSize: '132px',
-            color: '#FFFFFF'
-        }).setOrigin(0.5).setInteractive();
-
-        playBtn.on('pointerdown', () => {
-            this.scene.start('GameScene', { levelId: 1 });
-        });
-
-        // 3. Simple Toggle Switch (Sound)
-        const isSoundOn = this.registry.get('sound_enabled') ?? true; // Default true
-        const soundText = isSoundOn ? 'SOUND: ON' : 'SOUND: OFF';
+        this.audioManager = this.registry.get('audioManager');
+        if (!this.audioManager) {
+            // 2. First time arrival: Create it and save it
+            this.audioManager = new AudioManager(this);
+            this.registry.set('audioManager', this.audioManager);
+            console.log("AudioManager created for the first time.");
+        } else {
+            // 3. Returning from GameScene: Just update the context
+            console.log("Reusing existing AudioManager.");
+        }
         
-        const soundBtn = this.add.text(this.scale.width / 2, 1400, soundText, {
-            fontSize: '124px',
-            color: '#FFFFFF'
-        }).setOrigin(0.5).setInteractive();
+        this.translate = this.registry.get('translateService'); 
+        this.add.image(0, 0, 'brick-bg').setOrigin(0, 0).setDepth(0);
+        const theLight = this.add.image(this.scale.width / 2, 1000, 'light')
+            .setOrigin(0.5, 0.5)
+            .setDepth(0)
+            .setAlpha(0.35)
+            .setScale(1.5)
+            .setInteractive();
 
-        soundBtn.on('pointerdown', () => {
-            const current = this.registry.get('sound_enabled');
-            const newState = !current;
-            
-            // Save to Global Registry
-            this.registry.set('sound_enabled', newState);
-            
-            // Update Text
-            soundBtn.setText(newState ? 'SOUND: ON' : 'SOUND: OFF');
-            soundBtn.setColor(newState ? '#ffffff' : '#555555');
-        });
-
-
- 
-        // 1. The Title (Hot Pink)
-        const title = this.add.text(this.scale.width / 2, 1000, 'LOVE\nHURTS\nA LOT', {
-            fontFamily: 'Orbitron', // or your custom font
-            fontSize: '80px',
-            align: 'center',
-            color: '#ffffff',      // White core
-            stroke: '#ff0066',     // Hot Pink stroke
-            strokeThickness: 6
-        }).setOrigin(0.5);
-
-        // 2. The Glow (Stronger than Game Over)
-        title.setShadow(0, 0, '#ff0066', 30, true, true);
-
-        // 3. The "Heartbeat" Animation
-        // Instead of random flickering, we use a smooth Sine wave
-        this.tweens.add({
-            targets: title,
-            scale: 1.05,        // Grow slightly (5%)
-            alpha: 1.0,         // Stay bright
-            // Optional: If you use PostFX glow, you can tween the glow intensity here
-            duration: 1500,     // 1.5 seconds per beat
-            yoyo: true,         // Go back and forth
-            repeat: -1,         // Infinite loop
+         this.tweens.add({
+            targets: theLight,
+            alpha: { from: 0.32, to: 0.35 },
+            duration: 150,
+            yoyo: true,
+            repeat: -1,
             ease: 'Sine.easeInOut'
         });
 
-        // 4. (Optional) The "Hum"
-        // Menu neon shouldn't buzz like a broken light. 
-        // It should just have a very faint, steady electric hum (or just silence + music).
+        const neonSign = new NeonSignMenu(this, this.scale.width / 2, 1000, this.audioManager);
 
-            // 2. Play Button
-        const settingsBtn = this.add.text(this.scale.width / 2, 2000, 'SETTINGS', {
-            fontSize: '132px',
-            color: '#FFFFFF'
-        }).setOrigin(0.5).setInteractive();
+        this.buttonResume = this.add.sprite(this.scale.width / 2, 2250, 'button-green-normal');
+        this.buttonResume.setInteractive();
+        this.buttonResume.on('pointerdown', () => {
+            this.buttonResume.setTexture('button-green-pressed');
+            this.buttonResume.setScale(0.95);     // Optional: Add a slight scale down for "juice"
+        });
+        this.buttonResume.on('pointerup', () => {
+            // Immediate visual reset
+            this.buttonResume.setTexture('button-green-normal');
+            this.buttonResume.setScale(1);
 
-        settingsBtn.on('pointerdown', () => {
-            this.scene.start('SettingsScene');
+            // Short delay so the user SEES the button pop back up before scene change
+            this.time.delayedCall(100, () => {
+                this.audioManager.stopMusic();
+                this.scene.stop();
+                this.scene.start('GameScene', { levelId: 1 });
+            });
+        });
+        
+        this.buttonResume.on('pointerout', () => {
+            this.buttonResume.setTexture('button-green-normal');
+            this.buttonResume.setScale(0.8);
+        });
+
+        this.txtResume = this.add.text(this.scale.width / 2, 
+            this.buttonResume.y - 10,
+            this.translate.instant('MENU_SCENE.PLAY'),
+            { 
+            fontSize: '80px',
+            fontStyle: 'bold',
+            color: '#ffffff',
+            align: 'center',
+            fontFamily: this.dtc.strFontFamily,
+        })
+        .setOrigin(0.5);
+
+        this.buttonSettings = this.add.sprite(this.scale.width / 2, 2500, 'button-green-normal');
+        this.buttonSettings.setInteractive();
+        this.buttonSettings.setScale(0.8);
+
+        this.buttonSettings.on('pointerdown', () => {
+            this.buttonSettings.setTexture('button-green-pressed');
+            this.buttonSettings.setScale(0.75);     // Optional: Add a slight scale down for "juice"
+        });
+
+        this.buttonSettings.on('pointerup', () => {
+            // Immediate visual reset
+            this.buttonSettings.setTexture('button-green-normal');
+            this.buttonSettings.setScale(0.8);
+
+            // Short delay so the user SEES the button pop back up before scene change
+            this.time.delayedCall(100, () => {
+                //this.scene.stop('MenuScene');
+                this.scene.start('SettingsScene');
+            });
+        });
+
+        this.buttonSettings.on('pointerout', () => {
+            this.buttonSettings.setTexture('button-green-normal');
+            this.buttonSettings.setScale(0.8);
+        });
+
+        this.txtSettings = this.add.text(this.scale.width / 2, 
+            this.buttonSettings.y - 10,
+            this.translate.instant('MENU_SCENE.SETTINGS'),
+            { 
+            fontSize: '60px',
+            fontStyle: 'bold',
+            color: '#ffffff',
+            align: 'center',
+            fontFamily: this.dtc.strFontFamily,
+        })
+        .setOrigin(0.5);
+
+        // Listen for the shutdown event
+        this.events.on('shutdown', () => {
+            console.log('triggering shot down');
+            neonSign.stopEffects();
         });
     }
 }

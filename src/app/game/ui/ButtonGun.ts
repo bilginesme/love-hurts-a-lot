@@ -11,6 +11,7 @@ export class ButtonGun extends Phaser.GameObjects.Sprite {
 
         this.setOrigin(0.5, 0.5); 
         this.setScale(1.0);
+        this.setAlpha(0.8);
 
         this.on(Phaser.Input.Events.POINTER_DOWN, this.handlePointerDown, this);
         this.on(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);

@@ -17,6 +17,7 @@ export class ButtonWeaponChoosing extends Phaser.GameObjects.Container {
         // Add it to 'this' (the container), not the scene
         this.bgSprite = scene.add.sprite(0, 0, texture); 
         this.bgSprite.setInteractive(); // Interaction goes on the sprite
+        this.bgSprite.setAlpha(0.9);
         this.add(this.bgSprite);
 
         // 3. Create the Bullet Icon

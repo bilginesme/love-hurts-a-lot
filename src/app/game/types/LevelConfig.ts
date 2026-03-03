@@ -28,35 +28,29 @@ export const LEVEL_MANIFEST: LevelData[] = [
         backgroundKey: 'bg_city',
         weapons: ['the_neutralizer', 'dart'],
         phases: [
-            // PHASE 1: WARM UP (0s - 60s)
-            // Just flowerpots and potions. Slow pace.
             { 
                 startTime: 0, 
-                spawnInterval: 3000, 
+                spawnInterval: 5000, 
                 allowedItemsEvil: ['flowerpot'], 
                 allowedItemsLove: ['potion_small', 'potion_slow'], 
                 evilRatio: 0.5,
-                allowedBirds: ['stork', 'seagull']
+                allowedBirds: ['stork', 'seagull', 'pelican']
             },
-            // PHASE 2: REALITY SETS IN (45s - 120s)
-            // Microwaves enter. Faster.
             { 
                 startTime: 60, 
-                spawnInterval: 2500, 
+                spawnInterval: 4000, 
                 allowedItemsEvil: ['flowerpot', 'microwave'], 
                 allowedItemsLove: ['potion_small', 'potion_slow', 'potion_large'], 
                 evilRatio: 0.4,
-                allowedBirds: ['stork', 'seagull'] 
+                allowedBirds: ['stork', 'seagull', 'pelican'] 
             },
-            // PHASE 3: PANIC MODE (120s - End)
-            // Safes enter. Fast pace.
             { 
                 startTime: 120, 
-                spawnInterval: 2000, 
+                spawnInterval: 3000, 
                 allowedItemsEvil: ['flowerpot', 'microwave', 'safe'], 
                 allowedItemsLove: ['potion_small', 'potion_slow', 'potion_large'], 
                 evilRatio: 0.3,
-                allowedBirds: ['stork', 'seagull'] 
+                allowedBirds: ['stork', 'seagull', 'pelican'] 
             }
         ]
     }

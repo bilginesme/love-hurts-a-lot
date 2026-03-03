@@ -39,7 +39,7 @@ export default class PreloaderScene extends Phaser.Scene {
             
             //this.scene.start('SettingsScene');  // Start the Menu
             this.scene.start('GameScene', { levelId: 1 });
-            // this.scene.start('MenuScene');  // Start the Menu
+            //this.scene.start('MenuScene');  // Start the Menu
             //this.scene.start('GameOverScene', { score: 13400, result: false });
         });
 
@@ -54,9 +54,14 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('stars', 'assets/images/stars.png');
         this.load.image('brick-bg', 'assets/images/brick-bg.png');
         this.load.image('ladder-balcony', 'assets/images/ladder-balcony.png');
+        this.load.image('distant-buildings-bg', 'assets/images/distant-buildings/distant-buildings-bg.png');
         this.load.image('ladder-ladder', 'assets/images/ladder-ladder.png');
+        for(let i:number=1; i <= 19; i++) {
+            let suffix:string = this.dtc.doubleDigit(i);
+            this.load.image('window-' + suffix, 'assets/images/distant-buildings/window-' + suffix  + '.png');
+        }
 
-        this.load.image('scoreboard', 'assets/images/ui/scoreboard.png');
+        this.load.image('pill', 'assets/images/ui/pill.png');
         this.load.image('slider_fill', 'assets/images/ui/slider_fill.png');
         this.load.image('slider_knob', 'assets/images/ui/slider_knob.png');
         this.load.image('slider_bg', 'assets/images/ui/slider_bg.png');
@@ -64,8 +69,12 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('hero-male', 'assets/images/hero/hero-male.png');
         
         this.load.image('game-over', 'assets/images/game-over.png');
+        this.load.image('wires', 'assets/images/neon-sign/wires.png');
+        this.load.image('wires-short', 'assets/images/neon-sign/wires-short.png');
+        this.load.image('light', 'assets/images/neon-sign/light.png');
+
         this.load.image('apartment', 'assets/images/apartment.png');
-        this.load.image('distant-buildings-bg', 'assets/images/distant-buildings-bg.png');
+        
         this.load.image('bullet-small', 'assets/images/bullet-small.png');
         this.load.image('bullet-large', 'assets/images/bullet-large.png');
         this.load.image('bullet-dart', 'assets/images/bullet-dart.png');
@@ -76,13 +85,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('button-green-normal', 'assets/images/ui/button-green-normal.png');        
         this.load.image('button-green-pressed', 'assets/images/ui/button-green-pressed.png');        
 
-        this.load.image('safe', 'assets/images/objects/safe.png');
-        this.load.image('microwave', 'assets/images/objects/microwave.png');
-        this.load.image('flowerpot', 'assets/images/objects/flowerpot.png');
-
-        this.load.image('love-potion-red', 'assets/images/objects/love-potion-red.png');
-        this.load.image('love-potion-blue', 'assets/images/objects/love-potion-blue.png');
-        this.load.image('love-potion-strong', 'assets/images/objects/love-potion-strong.png');
+        this.load.spritesheet('objects-atlas', 'assets/images/objects/objects-atlas.png', { frameWidth: 250, frameHeight: 250 });
         this.load.image('balloon-yellow', 'assets/images/objects/balloon-yellow.png');
         this.load.image('balloon-red', 'assets/images/objects/balloon-red.png');
 
@@ -121,15 +124,25 @@ export default class PreloaderScene extends Phaser.Scene {
         }
 
         this.load.atlas('stork_atlas', 'assets/images/birds/stork-anim.png', 'assets/images/birds/stork-anim.json');
+        this.load.atlas('pelican_atlas', 'assets/images/birds/pelican-anim.png', 'assets/images/birds/pelican-anim.json');
         this.load.atlas('dust_atlas', 'assets/images/dust-anim.png', 'assets/images/dust-anim.json');
         this.load.atlas('lovebird_atlas', 'assets/images/birds/lovebird-anim.png', 'assets/images/birds/lovebird-anim.json');
         this.load.spritesheet('moon', 'assets/images/moon-phases.png', { frameWidth: 800, frameHeight: 800 });
+        this.load.spritesheet('neon-letters-menu-atlas', 'assets/images/neon-sign/neon-letters-menu.png', { frameWidth: 250, frameHeight: 250 });
+        this.load.spritesheet('neon-letters-game-over-atlas', 'assets/images/neon-sign/neon-letters-game-over.png', { frameWidth: 250, frameHeight: 250 });
+        this.load.spritesheet('feathers-atlas', 'assets/images/birds/feathers-atlas.png', { frameWidth: 250, frameHeight: 250 });
 
         this.load.audio('background-01', 'assets/sounds/background-01.mp3');
+        this.load.audio('background-02', 'assets/sounds/background-02.mp3');
+        this.load.audio('background-03', 'assets/sounds/background-03.mp3');
         this.load.audio('tick', 'assets/sounds/tick.mp3');
         this.load.audio('hit-ground-01', 'assets/sounds/hit-ground-01.mp3');
         this.load.audio('hit-couple-love', 'assets/sounds/hit-couple-love.mp3');
         this.load.audio('hit-couple-evil', 'assets/sounds/hit-couple-evil.mp3');
-       
+        this.load.audio('neon-buzz-01', 'assets/sounds/neon-buzz-01.mp3');
+        this.load.audio('neon-buzz-02', 'assets/sounds/neon-buzz-02.mp3');
+        this.load.audio('neon-humming-strong', 'assets/sounds/neon-humming-strong.mp3');
+        this.load.audio('neon-humming-weak', 'assets/sounds/neon-humming-weak.mp3');
+        this.load.audio('balloon-pop', 'assets/sounds/balloon-pop.mp3');
     }
 }

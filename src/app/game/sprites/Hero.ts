@@ -157,7 +157,6 @@ export class Hero extends Phaser.GameObjects.Container {
         
         // Optimization: Don't re-set if it's the same (unless you want to replay equip sound)
         if (nextKey !== this.currentWeaponKey) {
-            console.log(`Switching weapon to: ${nextKey}`);
             this.setWeapon(nextKey);
         }
     }
@@ -165,6 +164,5 @@ export class Hero extends Phaser.GameObjects.Container {
     public setWeapon(key: WeaponType) {
         this.currentWeaponKey = key;
         this.updateGunAndLaserBeam();
-        console.log('Weapon set method...');
     }
 }
