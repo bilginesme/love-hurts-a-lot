@@ -8,6 +8,8 @@ import PreloaderScene  from './scenes/PreloaderScene';
 import GameOverScene from './scenes/GameOverScene';
 import { TranslateService } from '@ngx-translate/core';
 import SettingsScene from './scenes/SettingsScene';
+import SuccessScene from './scenes/SuccessScene';
+
 
 @Component({
   selector: 'app-game',
@@ -49,10 +51,10 @@ export class GamePage implements OnInit {
         default: 'arcade',
         arcade: {
             gravity: { x: 0, y: 0 }, // No global gravity (we handle it per object if needed)
-            debug: true              // Set to TRUE to see hitboxes (very helpful for prototyping!)
+            debug: false              // Set to TRUE to see hitboxes (very helpful for prototyping!)
         }
         },
-        scene: [BootScene, PreloaderScene, GameScene, PauseScene, MenuScene, SettingsScene, GameOverScene], 
+        scene: [BootScene, PreloaderScene, GameScene, PauseScene, MenuScene, SettingsScene, GameOverScene, SuccessScene], 
         render: { 
           antialiasGL: true, 
           antialias: true, 

@@ -31,7 +31,7 @@ export default class Bird extends Phaser.Physics.Arcade.Sprite {
         this.cargoSprite.setDepth(this.depth - 1);
     }
  
-    spawn(y: number, speed: number, direction: number, birdData: BirdData, payload:ItemType, targetX?: number) {
+    public spawn(y: number, speed: number, direction: number, birdData: BirdData, payload:ItemType, targetX?: number) {
         this.payload = payload;
         this.birdData = birdData;
 
@@ -44,7 +44,7 @@ export default class Bird extends Phaser.Physics.Arcade.Sprite {
         //const startX = direction === 1 ? -50 : this.scene.scale.width + 50;
  
         // Increase the buffer for the right side (e.g., +200 instead of +50)
-        const startX = direction === 1 ? -50 : this.scene.scale.width - 250;
+        const startX = direction === 1 ? -50 : this.scene.scale.width - 400;
 
         this.setTexture(birdData.texture, birdData.frame);
         this.setScale(birdData.scale);

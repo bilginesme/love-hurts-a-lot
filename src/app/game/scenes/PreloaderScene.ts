@@ -38,9 +38,10 @@ export default class PreloaderScene extends Phaser.Scene {
             loadingText.destroy();
             
             //this.scene.start('SettingsScene');  // Start the Menu
-            this.scene.start('GameScene', { levelId: 1 });
+            //this.scene.start('GameScene', { levelId: 1 });
             //this.scene.start('MenuScene');  // Start the Menu
             //this.scene.start('GameOverScene', { score: 13400, result: false });
+            this.scene.start('SuccessScene', { score: 13400, result: true });
         });
 
         const font = new FontFace(this.dtc.strFontFamily, 'url(assets/fonts/PlaypenSans.ttf)');
@@ -135,6 +136,7 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.audio('background-01', 'assets/sounds/background-01.mp3');
         this.load.audio('background-02', 'assets/sounds/background-02.mp3');
         this.load.audio('background-03', 'assets/sounds/background-03.mp3');
+        this.load.audio('game-over', 'assets/sounds/game-over.mp3');
         this.load.audio('tick', 'assets/sounds/tick.mp3');
         this.load.audio('hit-ground-01', 'assets/sounds/hit-ground-01.mp3');
         this.load.audio('hit-couple-love', 'assets/sounds/hit-couple-love.mp3');

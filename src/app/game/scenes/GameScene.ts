@@ -593,7 +593,16 @@ export class GameScene extends Phaser.Scene {
 
     private endGame(victory: boolean) {
         this.upperPill.stopTimer(); // Stop the clock!
-        this.scene.start('GameOverScene', {
+        let strScene:string = '';
+
+        if(victory) {
+            strScene = 'SuccessScene';
+        }
+        else {
+            strScene = 'GameOverScene';
+        }
+        
+        this.scene.start(strScene, {
             score: this.score, 
             result: victory 
         });

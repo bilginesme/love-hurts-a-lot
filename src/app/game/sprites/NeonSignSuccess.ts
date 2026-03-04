@@ -3,7 +3,7 @@ import * as Phaser from 'phaser';
 import { AudioManager } from '../managers/AudioManager';
 import { DTC } from 'src/app/DTC';
 
-export class NeonSignGameOver extends Phaser.GameObjects.Container {
+export class NeonSignSuccess extends Phaser.GameObjects.Container {
    private letters: Phaser.GameObjects.Sprite[] = [];
    private flickers: Phaser.Time.TimerEvent[] = [];
    private audioManager!: AudioManager;

@@ -121,13 +121,20 @@ export class BirdSpawnManager {
       if(choice.coupleType == 'window_couple') {
          dropCapability = 'balloon';
       }
-      const birdData = this.getRandomBird(BirdNature.LOVE, dropCapability);
+      const birdData:BirdData = this.getRandomBird(BirdNature.LOVE, dropCapability)!;
       const payload = Phaser.Math.RND.pick(choice.validItems);
-      
+
       // Random Y within the VALID lane
       const laneY = Phaser.Math.Between(choice.lane.minY, choice.lane.maxY);
       const speed = Phaser.Math.Between(birdData!.speed - 50, birdData!.speed + 50);
-      const direction = Phaser.Math.RND.pick([1, -1]);
+      
+      let direction = 0;
+      if(birdData.capability == 'balloon') {
+         direction = -1;
+      }
+      else if(birdData.capability == 'standard') {
+         direction = 1;
+      }
 
       // Spawn
       const bird = this.birdsGroup.get();
