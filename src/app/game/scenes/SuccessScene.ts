@@ -49,10 +49,10 @@ export default class SuccessScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        const sign = new NeonSignSuccess(this, this.scale.width / 2, 1400, this.audioManager);
+        const sign = new NeonSignSuccess(this, this.scale.width / 2, 1600, this.audioManager);
 
         let strResultText:string = 'The result of the game';
-        let strScore:string = '0000';
+        let strScore:string = '';
 
         if(data) {
             if(data.result) {
@@ -61,8 +61,11 @@ export default class SuccessScene extends Phaser.Scene {
                 strResultText = this.translate.instant('GAME_OVER_SCENE.TITLE_FAILURE');
             }
             
-            strScore = data.score.toString();
+            strScore = data.score.toLocaleString('en-US');
         }
+
+        const imgHeroSuccess = this.add.image(this.scale.width / 2, 1100, 'hero-success')
+            .setOrigin(0.5, 0.5);
 
         // 1. Show Result
         this.add.text(this.scale.width / 2, 350, strResultText, 

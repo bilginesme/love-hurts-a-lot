@@ -75,7 +75,7 @@ export default class UpperPill extends Phaser.GameObjects.Container {
   
    public addScore(additionalScore: number): void {
       this.score += additionalScore;
-      this.txtScore.setText(this.score.toString().padStart(3, '0'));
+      this.txtScore.setText(this.score.toLocaleString('en-US').padStart(3, '0'));
 
       // 1. Background Pulse (Large and fast)
       this.scene.tweens.add({

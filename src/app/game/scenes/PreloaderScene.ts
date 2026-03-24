@@ -38,10 +38,10 @@ export default class PreloaderScene extends Phaser.Scene {
             loadingText.destroy();
             
             //this.scene.start('SettingsScene');  // Start the Menu
-            //this.scene.start('GameScene', { levelId: 1 });
+            this.scene.start('GameScene', { levelId: 1 });
             //this.scene.start('MenuScene');  // Start the Menu
             //this.scene.start('GameOverScene', { score: 13400, result: false });
-            this.scene.start('SuccessScene', { score: 13400, result: true });
+            //this.scene.start('SuccessScene', { score: 13400, result: true });
         });
 
         const font = new FontFace(this.dtc.strFontFamily, 'url(assets/fonts/PlaypenSans.ttf)');
@@ -68,7 +68,9 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('slider_bg', 'assets/images/ui/slider_bg.png');
 
         this.load.image('hero-male', 'assets/images/hero/hero-male.png');
-        
+        this.load.image('hero-success', 'assets/images/hero/hero-success.png');
+        this.load.image('hero-game-over', 'assets/images/hero/hero-game-over.png');
+
         this.load.image('game-over', 'assets/images/game-over.png');
         this.load.image('wires', 'assets/images/neon-sign/wires.png');
         this.load.image('wires-short', 'assets/images/neon-sign/wires-short.png');
@@ -86,7 +88,10 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.image('button-green-normal', 'assets/images/ui/button-green-normal.png');        
         this.load.image('button-green-pressed', 'assets/images/ui/button-green-pressed.png');        
 
-        this.load.spritesheet('objects-atlas', 'assets/images/objects/objects-atlas.png', { frameWidth: 250, frameHeight: 250 });
+        this.load.image('flowerpot', 'assets/images/objects/flowerpot.png');    
+        this.load.spritesheet('objects-atlas', 'assets/images/objects/objects-atlas.png', 
+            { frameWidth: 256, frameHeight: 256 });
+
         this.load.image('balloon-yellow', 'assets/images/objects/balloon-yellow.png');
         this.load.image('balloon-red', 'assets/images/objects/balloon-red.png');
 
@@ -129,14 +134,16 @@ export default class PreloaderScene extends Phaser.Scene {
         this.load.atlas('dust_atlas', 'assets/images/dust-anim.png', 'assets/images/dust-anim.json');
         this.load.atlas('lovebird_atlas', 'assets/images/birds/lovebird-anim.png', 'assets/images/birds/lovebird-anim.json');
         this.load.spritesheet('moon', 'assets/images/moon-phases.png', { frameWidth: 800, frameHeight: 800 });
-        this.load.spritesheet('neon-letters-menu-atlas', 'assets/images/neon-sign/neon-letters-menu.png', { frameWidth: 250, frameHeight: 250 });
-        this.load.spritesheet('neon-letters-game-over-atlas', 'assets/images/neon-sign/neon-letters-game-over.png', { frameWidth: 250, frameHeight: 250 });
+        this.load.spritesheet('neon-letters-menu-atlas', 'assets/images/neon-sign/neon-letters-menu-atlas.png', { frameWidth: 250, frameHeight: 250 });
+        this.load.spritesheet('neon-letters-game-over-atlas', 'assets/images/neon-sign/neon-letters-game-over-atlas.png', { frameWidth: 250, frameHeight: 250 });
+        this.load.spritesheet('neon-letters-success-atlas', 'assets/images/neon-sign/neon-letters-success-atlas.png', { frameWidth: 250, frameHeight: 250 });
         this.load.spritesheet('feathers-atlas', 'assets/images/birds/feathers-atlas.png', { frameWidth: 250, frameHeight: 250 });
 
         this.load.audio('background-01', 'assets/sounds/background-01.mp3');
         this.load.audio('background-02', 'assets/sounds/background-02.mp3');
         this.load.audio('background-03', 'assets/sounds/background-03.mp3');
-        this.load.audio('game-over', 'assets/sounds/game-over.mp3');
+        this.load.audio('game-over-scene', 'assets/sounds/game-over-scene.mp3');
+        this.load.audio('success-scene', 'assets/sounds/success-scene.mp3');
         this.load.audio('tick', 'assets/sounds/tick.mp3');
         this.load.audio('hit-ground-01', 'assets/sounds/hit-ground-01.mp3');
         this.load.audio('hit-couple-love', 'assets/sounds/hit-couple-love.mp3');

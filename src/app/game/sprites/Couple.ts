@@ -28,6 +28,7 @@ export default class Couple extends Phaser.Physics.Arcade.Sprite {
         this.isBusy = true;
         
         this.updateTexture();
+      
 
         // 1. Enable Physics immediately (so they can be hit)
         // Note: enableBody(reset, x, y, enableGameObject, showGameObject)
@@ -95,11 +96,13 @@ export default class Couple extends Phaser.Physics.Arcade.Sprite {
                 canBeHit = false;
             }
 
+        /*
         if(item.y < this.y) {
             console.log('THIS SOULD NOT BE HAPPENING');
             canBeHit = false;
         }
-  
+        */
+
         return canBeHit;
     }
 

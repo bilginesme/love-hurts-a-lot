@@ -15,11 +15,13 @@ export class NeonSignMenu extends Phaser.GameObjects.Container {
       {x: -90, y:-390},    // O
       {x:  90, y:-390},     // V
       {x: 250, y:-390},     // E
+
       {x:-320, y:-145},    // H
       {x:-150, y:-145},    // U
       {x:0, y:-145},       // R
       {x:170, y:-145},     // T
       {x:340, y:-145},     // S
+
       {x:0, y:106},        // A
       {x:-190, y:354},     // L
       {x:0, y:354},        // O
@@ -46,7 +48,7 @@ export class NeonSignMenu extends Phaser.GameObjects.Container {
       const wire = this.scene.add.image(0, 0, 'wires').setOrigin(0.5, 0.5);
       this.add(wire) 
       
-      for(let idxLetter:number = 0; idxLetter < 13; idxLetter++) {
+      for(let idxLetter:number = 0; idxLetter < this.letterPositions.length; idxLetter++) {
          const xLetter:number = this.letterPositions[idxLetter].x;
          const yLetter:number = this.letterPositions[idxLetter].y;
 

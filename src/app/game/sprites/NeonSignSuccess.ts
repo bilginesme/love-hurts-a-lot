@@ -11,14 +11,16 @@ export class NeonSignSuccess extends Phaser.GameObjects.Container {
    private humSound!: Phaser.Sound.BaseSound;
 
    private letterPositions: { x: number; y: number }[] = [
-      {x:-250, y:-145},     // G
-      {x: -90, y:-145},     // A
-      {x:  90, y:-145},     // M
+      {x:-250, y:-145},     // P
+      {x: -90, y:-145},     // U
+      {x:  90, y:-145},     // R
       {x: 250, y:-145},     // E
-      {x:-250, y:106},      // O
-      {x: -90, y:106},      // V
-      {x:  90, y:106},      // E
-      {x: 250, y:106},      // R      
+
+      {x:-320, y:106},      // B
+      {x: -150, y:106},     // L
+      {x:  0, y:106},       // I
+      {x: 170, y:106},      // S
+      {x: 340, y:106},      // S      
     ] 
 
     constructor(scene: Phaser.Scene, x: number, y: number, audioManager: AudioManager) {
@@ -41,14 +43,14 @@ export class NeonSignSuccess extends Phaser.GameObjects.Container {
       const wire = this.scene.add.image(0, 0, 'wires-short').setOrigin(0.5, 0.5);
       this.add(wire) 
       
-      for(let idxLetter:number = 0; idxLetter < 8; idxLetter++) {
+      for(let idxLetter:number = 0; idxLetter < this.letterPositions.length; idxLetter++) {
          const xLetter:number = this.letterPositions[idxLetter].x;
          const yLetter:number = this.letterPositions[idxLetter].y;
 
          const letterSprite = this.scene.add.sprite(
                xLetter, 
                yLetter, 
-               'neon-letters-game-over-atlas', idxLetter
+               'neon-letters-success-atlas', idxLetter
             );
 
          letterSprite.setBlendMode(Phaser.BlendModes.ADD).setScale(1.0);
@@ -91,7 +93,7 @@ export class NeonSignSuccess extends Phaser.GameObjects.Container {
                     onStart: () => {
                         // START MUSIC while hum is fading out
                         // (Assuming you have a 'menu_theme' key)
-                        const variations = ['game-over'];
+                        const variations = ['success-scene'];
                         this.audioManager.playMusicPlaylist(variations, 120000); // Swap every 2 mins
                     },
                     onComplete: () => {

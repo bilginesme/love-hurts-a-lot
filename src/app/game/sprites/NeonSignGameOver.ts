@@ -41,7 +41,7 @@ export class NeonSignGameOver extends Phaser.GameObjects.Container {
       const wire = this.scene.add.image(0, 0, 'wires-short').setOrigin(0.5, 0.5);
       this.add(wire) 
       
-      for(let idxLetter:number = 0; idxLetter < 8; idxLetter++) {
+      for(let idxLetter:number = 0; idxLetter < this.letterPositions.length; idxLetter++) {
          const xLetter:number = this.letterPositions[idxLetter].x;
          const yLetter:number = this.letterPositions[idxLetter].y;
 
@@ -91,7 +91,7 @@ export class NeonSignGameOver extends Phaser.GameObjects.Container {
                     onStart: () => {
                         // START MUSIC while hum is fading out
                         // (Assuming you have a 'menu_theme' key)
-                        const variations = ['game-over'];
+                        const variations = ['game-over-scene'];
                         this.audioManager.playMusicPlaylist(variations, 120000); // Swap every 2 mins
                     },
                     onComplete: () => {

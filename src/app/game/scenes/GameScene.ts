@@ -47,6 +47,8 @@ export class GameScene extends Phaser.Scene {
     private fallingItemsGroup!: Phaser.Physics.Arcade.Group;
     private couplesGroup!: Phaser.Physics.Arcade.Group;
     private floor!: Phaser.Physics.Arcade.StaticGroup;
+    //private testObject!:Phaser.GameObjects.Sprite;
+
 
     private clouds!:Clouds;
     private moon!:Moon;
@@ -110,7 +112,7 @@ export class GameScene extends Phaser.Scene {
         this.distantBuildings = new DistantBuildings(this, this.scale.width, this.scale.height - 150);
         this.apartment = new Apartment(this, 0, 2736);
         this.birdsGroup = this.physics.add.group({ classType: Bird, maxSize: 10, runChildUpdate: true });
-        this.fallingItemsGroup = this.physics.add.group({ runChildUpdate: true });
+        this.fallingItemsGroup = this.physics.add.group({ classType: FallingItem, runChildUpdate: true });
         this.ladderBalcony = this.add.sprite(990, 350, 'ladder-balcony').setOrigin(0, 0).setDepth(298);
         this.ladderLadder = this.add.sprite(1050, 0, 'ladder-ladder').setOrigin(0, 0).setDepth(299);
         this.hero = new Hero(this, 'hero-male').setDepth(300);
@@ -149,6 +151,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private developmentTools(): void {
+        
         // Setup Keyboard Input (Development Helper)
         // The event is 'keydown-SPACE'. It fires once per press (no rapid-fire machine gun if held down).
         this.input.keyboard?.on('keydown-SPACE', () => { this.shootWeapon();  });
@@ -166,6 +169,7 @@ export class GameScene extends Phaser.Scene {
             let x:number =parseInt(pointer.x.toString());
             let y:number =parseInt(pointer.y.toString());
             console.log(`Screen X: ${x}, Screen Y: ${y}`);
+            this.testDropItem(x);
         });
         */
 
@@ -176,6 +180,51 @@ export class GameScene extends Phaser.Scene {
             });
         */
     }
+
+    private testDropItem(x: number) {
+        /*
+        // 1. Instantiate the Sprite
+        this.testObject = this.add.sprite(x, -50, 'flowerpot');
+        
+        // 2. Add to Physics System
+        this.physics.add.existing(this.testObject);
+        const body = this.testObject.body as Phaser.Physics.Arcade.Body;
+
+        // 3. Define Physics Parameters
+        body.setGravityY(800);          // Standard heavy fall
+        body.setMaxVelocity(0, 1000);   // Prevents "tunneling" through thin hitboxes
+        body.setBounce(0.2);            // Slight "thud" feel for Love vs. Evil impact
+        
+        // 4. Match Hitbox to Visuals
+        // If your flowerpot has transparent padding, shrink the body:
+        body.setSize(this.testObject.width * 0.8, this.testObject.height * 0.9);
+        
+        this.physics.add.overlap(
+        this.couplesGroup, 
+        this.testObject, // Assuming your falling items are in a group
+        this.handleCoupleHit, 
+        undefined, 
+        this
+    );
+
+        console.log(`[Test] Dropping ${this.testObject.texture.key} at x: ${x}`);
+        */
+    }
+
+    private handleCoupleHit(coupleObj: any, itemObj: any) {
+    // Cast to your interfaces/classes
+    const couple = coupleObj as Couple;
+    const item = itemObj as FallingItem; // Or your Sprite/Container wrapper
+ 
+
+    // 3. Physics Precision: Kill the item so it doesn't multi-hit
+    // If it's a Container, destroy the container; if a Sprite, destroy the sprite.
+    item.destroy(); 
+
+    // 4. Creative Game Feel: Small Screen Shake on impact
+    this.cameras.main.shake(100, 0.005);
+}
+
 
     override update(time: number, delta: number) {
        
@@ -295,7 +344,9 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.fallingItemsGroup,  this.floor,  this.onItemHitsFloor as  Phaser.Types.Physics.Arcade.ArcadePhysicsCallback , this.callBack, this);
     }
 
-    private callBack() {}
+    private callBack(): boolean {
+    return true; 
+}
     
     private spawnCouple() {
         // 1. Get all couples that are currently "Asleep" (not busy)
@@ -424,6 +475,17 @@ export class GameScene extends Phaser.Scene {
             targets: text, y: y - 200, alpha: 0, duration: 1000,
             onComplete: () => text.destroy()
         });
+    }
+
+    private checkGameState() {
+        const currentLove = this.loveGauge.getCurrentValue();
+        if (currentLove <= 0) {
+            this.loveGauge.updateValue(0);
+            this.endGame(true);
+        } else if (currentLove >= 100) {
+            this.loveGauge.updateValue(100);
+            this.endGame(false);
+        }
     }
 
     private onItemHitCouple(couple: Couple, item: FallingItem) {
@@ -580,6 +642,8 @@ export class GameScene extends Phaser.Scene {
         // 2. Destroy the bullet if not balloon
         if(item.movementStyle != 'balloon_float')
             bullet.destroy();
+        else
+            console.log('BALLOON HIT');
 
         // 3. Note: We don't destroy the item here!
         // If wasHit === true, the item called popBalloon() internally.
