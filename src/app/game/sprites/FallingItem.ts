@@ -65,18 +65,28 @@ export class FallingItem extends Phaser.Physics.Arcade.Sprite {
         const body = this.body as Phaser.Physics.Arcade.Body;
         if (!body) return;
 
-        // In Sprite-land, size is straightforward
+        // Standard item dimensions
         const hitWidth = this.displayWidth * 0.7;
         const hitHeight = this.displayHeight * 0.6;
 
-        body.setSize(hitWidth, hitHeight);
-        
-        // Center the body on the sprite's origin
-        // Offset is relative to the top-left of the unscaled texture
-        body.setOffset(
-            (this.width / 2) - (hitWidth / 2 / this.scaleX),
-            (this.height * this.originY) - (hitHeight / 2 / this.scaleY)
-        );
+        if (this.isBalloonActive) {
+            // Expand body upwards to cover the balloon area (~60-80 pixels extra)
+            // We add the balloon gap and the balloon's approximate height
+            const balloonArea = 100; 
+            body.setSize(hitWidth, hitHeight + balloonArea);
+            
+            // Offset the body upwards so the bottom still aligns with the item
+            body.setOffset(
+                (this.width / 2) - (hitWidth / 2 / this.scaleX),
+                ((this.height * this.originY) - (hitHeight / 2 / this.scaleY)) - (balloonArea / this.scaleY)
+            );
+        } else {
+            body.setSize(hitWidth, hitHeight);
+            body.setOffset(
+                (this.width / 2) - (hitWidth / 2 / this.scaleX),
+                (this.height * this.originY) - (hitHeight / 2 / this.scaleY)
+            );
+        }
     }
 
     // Crucial: Because we aren't a container, we must manually move the balloon
@@ -135,14 +145,17 @@ export class FallingItem extends Phaser.Physics.Arcade.Sprite {
         this.isBalloonActive = false;
         this.balloonSprite.destroy();
         
+        // RE-CALCULATE PHYSICS FOR ITEM ONLY
+        this.setupPhysics(); 
+
         const body = this.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(true);
         body.setAccelerationY(800);
         body.setVelocityY(200);
-        body.setAngularVelocity(Phaser.Math.Between(-200, 200)); // Start tumbling
+        body.setAngularVelocity(Phaser.Math.Between(-200, 200));
     }
 
-        public stopSpinning(): number {
+    public stopSpinning(): number {
         // 1. Stop the internal spin tween on the sprite
         this.scene.tweens.killTweensOf(this);
         
@@ -151,30 +164,29 @@ export class FallingItem extends Phaser.Physics.Arcade.Sprite {
     }
 
     public checkHitCoordinates(bullet: Bullet): boolean {
-        const isVulnerable:boolean = this.itemData.vulnerableTo.includes(bullet.getWeaponData().id);
+        const isVulnerable = this.itemData.vulnerableTo.includes(bullet.getWeaponData().id);
 
-        if(!isVulnerable)
-            return false;
+        if (!isVulnerable) return false;
 
-        // If it's a normal falling item (no balloon), decide vulnerability
-        if (!this.isBalloonActive) {
-            this.playRicochet(); 
-            return false; // Safes/Microwaves are armored!
+        if (this.isBalloonActive) {
+            // The balloon is visually above the item's top edge.
+            // Item top = this.y - (this.displayHeight * this.originY)
+            const itemTopEdge = this.y - (this.displayHeight * this.originY);
+
+            if (bullet.y < itemTopEdge + 10) { 
+                // Bullet is above the item top -> It hit the balloon!
+                this.popBalloon();
+                return true; 
+            } else {
+                // Bullet hit the item itself while balloon is active
+                this.playRicochet();
+                return false;
+            }
         }
 
-        // Check: Did we hit the Balloon or the Item?
-        // Define the "Neck" Y-position between item and balloon
-        const separationY = this.y - (this.height * 0.4);
-
-        if (bullet.y < separationY) {
-            // Bullet is ABOVE separation -> HITS BALLOON
-            this.popBalloon();
-            return true; // Hit registered, destroy bullet
-        } else {
-            // Bullet is BELOW separation -> HITS METAL ITEM
-            this.playRicochet();
-            return false; // Hit failed, destroy bullet, item survives
-        }
+        // No balloon? Pure ricochet.
+        this.playRicochet();
+        return false;
     }
 
     private playRicochet(): void {
